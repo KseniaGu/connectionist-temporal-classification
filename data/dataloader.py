@@ -1,10 +1,15 @@
 import os
+import pickle
 from matplotlib import pyplot as plt
 import torch
 import torchvision.transforms as transforms
 import random
+from tqdm import tqdm
 from time import time
 from torch.utils.data import DataLoader, Dataset
+from PIL import Image, ImageFile
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 from utils import pil_loader, Transforms, Denormalize
 
@@ -39,7 +44,7 @@ class mjsynthDataset(Dataset):
 
 def my_collate_fn(batch):
     """Pads image to max batch width with arbitrary pixels by both side."""
-    images = (sample[0] for sample in batch)
+    images = [sample[0] for sample in batch]
     labels = [sample[1] for sample in batch]
     lens = [sample[2] for sample in batch]
 
@@ -60,27 +65,50 @@ class Data_loader:
         self.config = config
         self._load_data()
 
-    def _make_paths_and_labels(self, phase='train'):
-        """Goes through annotation_<phase> files from dataset directory and gathers images paths."""
-        with open(os.path.join(self.config.paths.dataset, 'annotation_' + phase + '.txt'), 'r') as f:
-            file_names = f.readlines()
-            image_paths, labels = [], []
+    def check_corrupted_images(self, images_dir, to_save=True):
+        if os.path.exists(self.config.paths.corrupted_images_paths):
+            with open(self.config.paths.corrupted_images_paths, 'rb') as f:
+                not_valid_files = pickle.load(f)
+        else:
+            not_valid_files = []
 
-            for file_name in file_names[:self.config.train[phase + '_size']]:
-                labels.append(file_name.split('_')[1])
-                file_name = file_name[2:file_name.find(' ')]
-                file_name = file_name.replace('/', '\\')
-                image_paths.append(os.path.join(self.config.paths.dataset, file_name))
+        for x in tqdm(os.listdir(images_dir)):
+            if x in not_valid_files:
+                continue
+            try:
+                with open(os.path.join(images_dir, x), 'rb') as f:
+                    Image.open(f)
+            except Exception as e:
+                print(e)
+                not_valid_files.append(x)
+
+        if to_save:
+            with open(self.config.paths.corrupted_images_paths, 'wb') as f:
+                pickle.dump(not_valid_files, f)
+
+        return not_valid_files
+
+    def make_paths_and_labels(self, phase='train'):
+        """Goes through annotation_<phase> files from dataset directory and gathers images paths."""
+        image_paths, labels = [], []
+        images_dir = os.path.join(self.config.paths.dataset, phase + '_split')
+        not_valid_files = self.check_corrupted_images(images_dir)
+
+        for x in os.listdir(images_dir)[:self.config.train.train_size]:
+            if not x in not_valid_files:
+                image_paths.append(os.path.join(images_dir, x))
+                labels.append(x.split('_')[1])
+
         return image_paths, labels
 
     def _load_data(self):
-        tr_image_paths, tr_labels = self._make_paths_and_labels(phase='train')
-        val_image_paths, val_labels = self._make_paths_and_labels(phase='val')
-        test_image_paths, test_labels = self._make_paths_and_labels(phase='test')
+        tr_image_paths, tr_labels = self.make_paths_and_labels(phase='train')
+        val_image_paths, val_labels = self.make_paths_and_labels(phase='val')
+        test_image_paths, test_labels = self.make_paths_and_labels(phase='test')
 
-        self.tr_dataset = mjsynthDataset(tr_image_paths, tr_labels, Transforms.train())
-        self.val_dataset = mjsynthDataset(val_image_paths, val_labels, Transforms.test())
-        self.test_dataset = mjsynthDataset(test_image_paths, test_labels, Transforms.test())
+        self.tr_dataset = mjsynthDataset(tr_image_paths, tr_labels, Transforms.train(self.config), self.config)
+        self.val_dataset = mjsynthDataset(val_image_paths, val_labels, Transforms.test(self.config), self.config)
+        self.test_dataset = mjsynthDataset(test_image_paths, test_labels, Transforms.test(self.config), self.config)
 
         self.tr_loader = DataLoader(self.tr_dataset, batch_size=self.config.train.batch_size,
                                     collate_fn=my_collate_fn)

@@ -1,8 +1,10 @@
 import torch
+from easydict import EasyDict
 
 cfg = EasyDict()
 cfg.paths = EasyDict()
 cfg.paths.dataset = 'D:\\Datasets\\mjsynth\\mnt\\ramdisk\\max\\90kDICT32px'
+cfg.paths.corrupted_images_paths = 'D:\\Datasets\\corrupted_images_paths.pickle'
 
 cfg.images = EasyDict()
 # small subset analysis data:

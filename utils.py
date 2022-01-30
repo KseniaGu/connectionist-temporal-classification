@@ -6,7 +6,6 @@ import torchvision.transforms as transforms
 from matplotlib import pyplot as plt
 import random
 import numpy as np
-from TextRecognition.config import cfg
 import os
 
 CHANNEL_NUM = 3
@@ -96,7 +95,7 @@ def noise(x):
 
 class Transforms:
     @staticmethod
-    def train():
+    def train(cfg):
         return transforms.Compose(
             [
                 transforms.Lambda(resize),
@@ -107,7 +106,7 @@ class Transforms:
                 transforms.Normalize(cfg.images.pix_mean, cfg.images.pix_std)])
 
     @staticmethod
-    def test():
+    def test(cfg):
         return transforms.Compose(
             [transforms.Lambda(resize),
              transforms.Lambda(pad),
@@ -115,7 +114,7 @@ class Transforms:
              transforms.Normalize(cfg.images.pix_mean, cfg.images.pix_std)])
 
 
-def find_ims_stats(annot_file, nrof_files=1000):
+def find_ims_stats(cfg, annot_file, nrof_files=1000):
     heights, widths = [], []
     pixel_num = 0
     channel_sum = np.zeros(CHANNEL_NUM)
