@@ -3,8 +3,11 @@ from easydict import EasyDict
 
 cfg = EasyDict()
 cfg.paths = EasyDict()
-cfg.paths.dataset = 'D:\\Datasets\\mjsynth\\mnt\\ramdisk\\max\\90kDICT32px'
-cfg.paths.corrupted_images_paths = 'D:\\Datasets\\corrupted_images_paths.pickle'
+cfg.paths.dataset = r'D:\Datasets\mjsynth\mnt\ramdisk\max\90kDICT32px'
+cfg.paths.train_split_dir = r'D:\Datasets\mjsynth_split\train'
+cfg.paths.val_split_dir = r'D:\Datasets\mjsynth_split\val'
+cfg.paths.test_split_dir = r'D:\Datasets\mjsynth_split\test'
+cfg.paths.corrupted_images_paths = r'D:\Datasets\corrupted_images_paths.pickle'
 
 cfg.images = EasyDict()
 # small subset analysis data:

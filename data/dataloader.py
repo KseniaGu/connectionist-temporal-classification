@@ -91,7 +91,7 @@ class Data_loader:
     def make_paths_and_labels(self, phase='train'):
         """Goes through annotation_<phase> files from dataset directory and gathers images paths."""
         image_paths, labels = [], []
-        images_dir = os.path.join(self.config.paths.dataset, phase + '_split')
+        images_dir = getattr(self.config.paths, phase + '_split_dir')
         not_valid_files = self.check_corrupted_images(images_dir)
 
         for x in os.listdir(images_dir)[:self.config.train.train_size]:
