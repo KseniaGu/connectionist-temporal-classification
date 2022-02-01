@@ -65,26 +65,27 @@ class Data_loader:
         self.config = config
         self._load_data()
 
-    def check_corrupted_images(self, images_dir, to_save=True):
+    def check_corrupted_images(self, images_dir, to_save=True, to_load=True):
         if os.path.exists(self.config.paths.corrupted_images_paths):
             with open(self.config.paths.corrupted_images_paths, 'rb') as f:
                 not_valid_files = pickle.load(f)
         else:
             not_valid_files = []
 
-        for x in tqdm(os.listdir(images_dir)):
-            if x in not_valid_files:
-                continue
-            try:
-                with open(os.path.join(images_dir, x), 'rb') as f:
-                    Image.open(f)
-            except Exception as e:
-                print(e)
-                not_valid_files.append(x)
+        if not to_load:
+            for x in tqdm(os.listdir(images_dir)):
+                if x in not_valid_files:
+                    continue
+                try:
+                    with open(os.path.join(images_dir, x), 'rb') as f:
+                        Image.open(f)
+                except Exception as e:
+                    print(e)
+                    not_valid_files.append(x)
 
-        if to_save:
-            with open(self.config.paths.corrupted_images_paths, 'wb') as f:
-                pickle.dump(not_valid_files, f)
+            if to_save:
+                with open(self.config.paths.corrupted_images_paths, 'wb') as f:
+                    pickle.dump(not_valid_files, f)
 
         return not_valid_files
 
