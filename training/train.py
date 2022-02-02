@@ -120,8 +120,6 @@ class Train:
                 print()
                 print('lr', self.optim.state_dict()["param_groups"][0]["lr"])
 
-            break
-
     def validate(self, phase='val', to_load=False):
         if to_load:
             self.load_model()
